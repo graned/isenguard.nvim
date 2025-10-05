@@ -22,3 +22,5 @@ This will install the project in the `.config/` folder under folder `isenguard`
 ```bash
 alias isenguard='NVIM_APPNAME="isn" nvm'
 ```
+
+- source your .zshrc
