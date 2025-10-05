@@ -91,7 +91,7 @@ vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = false
+vim.g.have_nerd_font = true
 
 -- [[ Setting options ]]
 -- See `:help vim.o`
@@ -114,9 +114,9 @@ vim.o.showmode = false
 --  Schedule the setting after `UiEnter` because it can increase startup-time.
 --  Remove this option if you want your OS clipboard to remain independent.
 --  See `:help 'clipboard'`
-vim.schedule(function()
-  vim.o.clipboard = 'unnamedplus'
-end)
+--vim.schedule(function()
+--  vim.o.clipboard = 'unnamedplus'
+-- end)
 
 -- Enable break indent
 vim.o.breakindent = true
@@ -661,6 +661,7 @@ require('lazy').setup({
       --  So, we create new capabilities with blink.cmp, and then broadcast that to the servers.
       local capabilities = require('blink.cmp').get_lsp_capabilities()
 
+      -- helper to attach any LSP config to a filetype
       -- Enable the following language servers
       --  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
       --
@@ -683,7 +684,40 @@ require('lazy').setup({
         -- But for many setups, the LSP (`ts_ls`) will work just fine
         -- ts_ls = {},
         --
+        -- TypeScript / JavaScript (vtsls instead of tsserver)
+        vtsls = {
+          settings = {
+            complete_function_calls = true,
+            tsserver_file_preferences = {
+              includeInlayParameterNameHints = 'all',
+              includeCompletionsForModuleExports = true,
+            },
+          },
+        },
 
+        -- Python
+        basedpyright = {}, -- type checking
+        ruff_lsp = { -- linting + quickfixes
+          on_attach = function(client)
+            -- Let basedpyright handle hovers; ruff for diagnostics/code actions
+            client.server_capabilities.hoverProvider = false
+          end,
+        },
+
+        -- Rust (use this only if you are NOT using rustaceanvim)
+        -- If you DO use rustaceanvim, delete this rust_analyzer entry to avoid double attach.
+        -- rust_analyzer = {
+        --   settings = {
+        --   ["rust-analyzer"] = {
+        --      cargo = { allFeatures = true },
+        --      checkOnSave = true,
+        --      check = { command = "clippy" },
+        --    },
+        --  },
+        -- },
+
+        -- (optional) TOML LSP for Cargo.toml
+        taplo = {},
         lua_ls = {
           -- cmd = { ... },
           -- filetypes = { ... },
@@ -876,28 +910,6 @@ require('lazy').setup({
     },
   },
 
-  { -- You can easily change to a different colorscheme.
-    -- Change the name of the colorscheme plugin below, and then
-    -- change the command in the config to whatever the name of that colorscheme is.
-    --
-    -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-    'folke/tokyonight.nvim',
-    priority = 1000, -- Make sure to load this before all the other start plugins.
-    config = function()
-      ---@diagnostic disable-next-line: missing-fields
-      require('tokyonight').setup {
-        styles = {
-          comments = { italic = false }, -- Disable italics in comments
-        },
-      }
-
-      -- Load the colorscheme here.
-      -- Like many other themes, this one has different styles, and you could load
-      -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'tokyonight-night'
-    end,
-  },
-
   -- Highlight todo, notes, etc in comments
   { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
 
@@ -952,7 +964,7 @@ require('lazy').setup({
         -- Some languages depend on vim's regex highlighting system (such as Ruby) for indent rules.
         --  If you are experiencing weird indenting issues, add the language to
         --  the list of additional_vim_regex_highlighting and disabled languages for indent.
-        additional_vim_regex_highlighting = { 'ruby' },
+        -- additional_vim_regex_highlighting = { 'ruby' },
       },
       indent = { enable = true, disable = { 'ruby' } },
     },
@@ -979,7 +991,8 @@ require('lazy').setup({
   require 'kickstart.plugins.autopairs',
   require 'kickstart.plugins.neo-tree',
   require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
---  require 'kickstart.plugins.devstack',
+  require 'kickstart.plugins.devstack',
+  require 'kickstart.plugins.theme',
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.

@@ -9,8 +9,8 @@ return {
       ensure_installed = {
         -- LSP servers
         'basedpyright', -- Python
-        'ruff_lsp', -- Python linter LSP
-        'tsserver', -- TypeScript/JavaScript
+        'ruff', -- Python linter LSP
+        'vtsls', -- TypeScript/JavaScript
         'rust_analyzer', -- Rust
       },
       automatic_installation = true,
@@ -25,49 +25,23 @@ return {
         -- Python
         'basedpyright',
         'ruff',
-        'ruff-lsp',
         'black',
         -- TypeScript/JS
-        'typescript-language-server',
+        'vtsls',
         'prettierd',
         -- Rust
         'rust-analyzer',
         'codelldb',
+        -- git
+        'lazygit',
+        --markdown
+        'markdownlint',
       },
       auto_update = true,
       run_on_start = true,
       start_delay = 3000,
       debounce_hours = 6,
     },
-  },
-
-  -- LSP configs
-  {
-    'neovim/nvim-lspconfig',
-    config = function()
-      local lsp = require 'lspconfig'
-      local capabilities = vim.lsp.protocol.make_client_capabilities()
-      local ok_cmp, cmp = pcall(require, 'cmp_nvim_lsp')
-      if ok_cmp then
-        capabilities = cmp.default_capabilities(capabilities)
-      end
-
-      -- Python: basedpyright + ruff_lsp
-      lsp.basedpyright.setup { capabilities = capabilities }
-      lsp.ruff_lsp.setup {
-        capabilities = capabilities,
-        on_attach = function(client)
-          -- Let Ruff format/fix; disable hover if you prefer Pyright’s hover
-          client.server_capabilities.hoverProvider = false
-        end,
-      }
-
-      -- TypeScript / JavaScript
-      lsp.tsserver.setup { capabilities = capabilities }
-
-      -- Rust (use rustaceanvim below; comment that out if you prefer plain lsp)
-      lsp.rust_analyzer.setup { capabilities = capabilities }
-    end,
   },
 
   -- Rust UX (recommended)
@@ -80,7 +54,8 @@ return {
           settings = {
             ['rust-analyzer'] = {
               cargo = { allFeatures = true },
-              checkOnSave = { command = 'clippy' },
+              checkOnSave = true,
+              check = { command = 'clippy' },
             },
           },
         },
@@ -115,37 +90,60 @@ return {
     end,
   },
 
-  -- Codeium (AI pair programming)
+  -- NeoGit
   {
-    'Exafunction/codeium.nvim',
+    'NeogitOrg/neogit',
     dependencies = {
       'nvim-lua/plenary.nvim',
-      'hrsh7th/nvim-cmp', -- if you’re using cmp (kickstart does)
+      'sindrets/diffview.nvim', -- optional but great for diffs
+      'nvim-telescope/telescope.nvim', -- optional pickers
     },
-    config = function()
-      require('codeium').setup {}
-      -- After first start, run :Codeium Auth in Neovim to link your account.
-      -- If you want Codeium suggestions inline + cmp source, ensure the cmp source is added (see below).
-    end,
-  },
-
-  -- Add Codeium to nvim-cmp sources (if your repo has a cmp config file already)
-  {
-    'hrsh7th/nvim-cmp',
-    opts = function(_, opts)
-      opts.sources = opts.sources or {}
-      -- Prepend Codeium to increase its priority (optional)
-      table.insert(opts.sources, 1, { name = 'codeium' })
-      return opts
-    end,
-  },
-
-  -- LazyGit integration
-  {
-    'kdheepak/lazygit.nvim',
-    dependencies = { 'nvim-lua/plenary.nvim' },
+    cmd = { 'Neogit' },
     keys = {
-      { '<leader>gg', '<cmd>LazyGit<cr>', desc = 'LazyGit' },
+      {
+        '<leader>gg',
+        function()
+          require('neogit').open()
+        end,
+        desc = 'Neogit',
+      },
+      {
+        '<leader>gc',
+        function()
+          require('neogit').open { 'commit' }
+        end,
+        desc = 'Neogit Commit',
+      },
+      {
+        '<leader>gpr',
+        function()
+          require('neogit').open { 'pull' }
+        end,
+        desc = 'Neogit Pull',
+      },
+      {
+        '<leader>gp',
+        function()
+          require('neogit').open { 'push' }
+        end,
+        desc = 'Neogit Push',
+      },
+    },
+    opts = {
+      disable_signs = false,
+      disable_commit_confirmation = true,
+      integrations = {
+        diffview = true, -- use Diffview for diffs/log
+        telescope = true, -- Telescope pickers
+      },
+      kind = 'tab', -- "tab" | "replace" | "floating"
+      commit_editor = {
+        kind = 'auto', -- smartly choose where to open commit buffer
+      },
+      mappings = {
+        commit_editor = { ['q'] = 'Close' },
+        rebase_editor = { ['q'] = 'Close' },
+      },
     },
   },
 }
